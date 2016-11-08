@@ -93,25 +93,47 @@ public class HttpClient implements Closeable, AutoCloseable {
     }
 
     protected void execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params, String encoding) {
-        execute(method,url,headers,parseParams(params),encoding);
+        execute(method, url, headers, parseParams(params), encoding);
     }
 
-    protected void execute(HttpMethod method, String url, Map<String,String> headers, Map<String,?>params){
-        execute(method,url,headers,params,"utf-8");
+    protected void execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params) {
+        execute(method, url, headers, params, "utf-8");
     }
 
-    protected void execute(String url, Map<String,String> headers, HttpEntity entity){
+    protected void execute(String url, Map<String, String> headers, HttpEntity entity) {
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(entity);
         request = httpPost;
         lastStatus = 0;
-        setHeaders(request,headers);
+        setHeaders(request, headers);
         setRequestConfig(request);
     }
 
-    protected void execute(String url, Map<String,String> headers, String data, ContentType type){
-        execute(url,headers,new StringEntity(data,type));
+    protected void execute(String url, Map<String, String> headers, String data, ContentType type) {
+        execute(url, headers, new StringEntity(data, type));
     }
+
+
+    private String getRedirectUrl(String url, String location) {
+        if (location.startsWith("http")) {
+            return location;
+        } else {
+            String baseUrl = url;
+            if (baseUrl.contains("?")){
+                baseUrl = baseUrl.substring(0,baseUrl.indexOf("?"));
+            }
+            int p = baseUrl.indexOf("/",8);
+            if (p != -1){
+                baseUrl = baseUrl.substring(0,p);
+            }
+            if (location.startsWith("/")){
+                return baseUrl + location;
+            }else{
+                return baseUrl + "/" + location;
+            }
+        }
+    }
+
 
 
     @Override
