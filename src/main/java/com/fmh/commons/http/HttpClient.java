@@ -33,6 +33,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     protected int maxRedirect = -1;
     protected int maxTimeout = -1;
     protected HttpProxy proxy = null;
+    protected int lastStatus;
 
 
     private void setHeaders(HttpRequestBase requestBase, Map<String, String> headers) {
@@ -83,6 +84,7 @@ public class HttpClient implements Closeable, AutoCloseable {
             default:
                 break;
         }
+        lastStatus = 0;
         if (params != null && request instanceof HttpEntityEnclosingRequestBase) {
             ((HttpEntityEnclosingRequestBase) request).setEntity(new UrlEncodedFormEntity(params, Charset.forName(encoding)));
         }
@@ -102,6 +104,7 @@ public class HttpClient implements Closeable, AutoCloseable {
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(entity);
         request = httpPost;
+        lastStatus = 0;
         setHeaders(request,headers);
         setRequestConfig(request);
     }
