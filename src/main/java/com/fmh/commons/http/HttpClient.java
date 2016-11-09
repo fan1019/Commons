@@ -6,17 +6,24 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class HttpClient implements Closeable, AutoCloseable {
@@ -25,6 +32,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     protected static final int connectionRequestTimeout = 30000;
     protected static final int socketTimeout = 30000;
     protected static final int maxRedirects = 4;
+    protected static final int defaultMaxTimeout = 30000;
 
     protected HttpClientContext context = null;
     protected CloseableHttpResponse response = null;
@@ -70,7 +78,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     }
 
 
-    protected void execute(HttpMethod method, String url, Map<String, String> headers, List<NameValuePair> params, String encoding) {
+    protected HttpResponse execute(HttpMethod method, String url, Map<String, String> headers, List<NameValuePair> params, String encoding) {
         switch (method) {
             case POST:
                 request = new HttpPost(url);
@@ -90,27 +98,33 @@ public class HttpClient implements Closeable, AutoCloseable {
         }
         setHeaders(request, headers);
         setRequestConfig(request);
+        return doRequest(method,url);
     }
 
-    protected void execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params, String encoding) {
-        execute(method, url, headers, parseParams(params), encoding);
+    protected HttpResponse execute(HttpMethod method, String url, Map<String,String>headers, List<NameValuePair>params){
+        return execute(method,url,headers,params,"utf-8");
     }
 
-    protected void execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params) {
-        execute(method, url, headers, params, "utf-8");
+    protected HttpResponse execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params, String encoding) {
+        return execute(method, url, headers, parseParams(params), encoding);
     }
 
-    protected void execute(String url, Map<String, String> headers, HttpEntity entity) {
+    protected HttpResponse execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params) {
+        return execute(method, url, headers, params, "utf-8");
+    }
+
+    protected HttpResponse execute(String url, Map<String, String> headers, HttpEntity entity) {
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(entity);
         request = httpPost;
         lastStatus = 0;
         setHeaders(request, headers);
         setRequestConfig(request);
+        return doRequest(HttpMethod.POST,url);
     }
 
-    protected void execute(String url, Map<String, String> headers, String data, ContentType type) {
-        execute(url, headers, new StringEntity(data, type));
+    protected HttpResponse execute(String url, Map<String, String> headers, String data, ContentType type) {
+        return execute(url, headers, new StringEntity(data, type));
     }
 
 
@@ -119,22 +133,95 @@ public class HttpClient implements Closeable, AutoCloseable {
             return location;
         } else {
             String baseUrl = url;
-            if (baseUrl.contains("?")){
-                baseUrl = baseUrl.substring(0,baseUrl.indexOf("?"));
+            if (baseUrl.contains("?")) {
+                baseUrl = baseUrl.substring(0, baseUrl.indexOf("?"));
             }
-            int p = baseUrl.indexOf("/",8);
-            if (p != -1){
-                baseUrl = baseUrl.substring(0,p);
+            int p = baseUrl.indexOf("/", 8);
+            if (p != -1) {
+                baseUrl = baseUrl.substring(0, p);
             }
-            if (location.startsWith("/")){
+            if (location.startsWith("/")) {
                 return baseUrl + location;
-            }else{
+            } else {
                 return baseUrl + "/" + location;
             }
         }
     }
 
+    private HttpResponse doRequest(HttpMethod method, String url) {
+        FutureTask<HttpResponse> task = new FutureTask<>(() ->{
+            try{
+                response = client.execute(request,context);
+                lastStatus = response.getStatusLine().getStatusCode();
+                switch (method){
+                    case POST:
+                        if (lastStatus / 100 == 3){
+                            String location = response.getFirstHeader("Location").getValue();
+                            response.close();
+                            return null;
+                        }
+                        break;
+                    case GET:
+                    case DELETE:
+                        break;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+                return new HttpResponse(context,lastStatus);
+            }catch (ConnectTimeoutException e){
+                e.printStackTrace();
+                return null;
+            }finally {
+                if (response != null){
+                    try{
+                        response.close();
+                    }catch (IOException e){
+                       LoggerFactory.getLogger("BaseLog").error("response 关闭失败",e);
+                    }
+                }
+            }
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+        try{
+            return task.get(maxTimeout == -1 ? defaultMaxTimeout : maxTimeout, TimeUnit.MILLISECONDS);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("遇到系统问题",e);
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+            return null;
+        }finally {
+            thread.interrupt();
+        }
+    }
 
+    public HttpResponse get(String url){
+        return get(url,null);
+    }
+
+    public HttpResponse get(String url, Map<String,String>headers){
+        return execute(url,headers,null);
+
+    }
+
+    public HttpResponse post(String url,List<NameValuePair> params){
+        return post(url,null,params);
+    }
+
+    public HttpResponse post(String url, Map<String,String>headers,List<NameValuePair>params){
+        return execute(HttpMethod.POST,url,headers,params);
+    }
+
+    public HttpResponse post(String url, Map<String,String> headers, String params,ContentType contentType){
+        return execute(url,headers,params,contentType);
+    }
+
+    public HttpResponse post(String url, String params, ContentType contentType){
+        return post(url,null,params,contentType);
+    }
+
+    public HttpResponse post(String url, Map<String,String>headers, HttpEntity entity)
 
     @Override
     public void close() {
