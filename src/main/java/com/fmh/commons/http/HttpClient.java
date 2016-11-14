@@ -7,18 +7,32 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.cookie.Cookie;
+import org.apache.http.cookie.CookieOrigin;
+import org.apache.http.cookie.CookieSpecProvider;
+import org.apache.http.cookie.MalformedCookieException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.*;
+import org.apache.http.impl.cookie.DefaultCookieSpec;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.ssl.SSLContexts;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +50,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     protected static final int socketTimeout = 30000;
     protected static final int maxRedirects = 4;
     protected static final int defaultMaxTimeout = 30000;
+    protected static final String defaultCookieSpecName = "accept-all";
 
     protected HttpClientContext context = null;
     protected CloseableHttpResponse response = null;
@@ -46,6 +61,57 @@ public class HttpClient implements Closeable, AutoCloseable {
     protected HttpProxy proxy = null;
     protected int lastStatus;
     protected CookieStore cookieStore = new BasicCookieStore();
+
+    protected static final String[] DATE_PATTERNS = new String[] { "EEE, dd MMM yyyy HH:mm:ss zzz",
+            "EEE, dd-MMM-yy HH:mm:ss zzz", "EEE, dd-MMM-yy HH:mm:ss z", "EEE MMM d HH:mm:ss yyyy",
+            "EEE, dd-MMM-yyyy HH:mm:ss z", "EEE, dd-MMM-yyyy HH-mm-ss z", "EEE, dd MMM yy HH:mm:ss z",
+            "EEE dd-MMM-yyyy HH:mm:ss z", "EEE dd MMM yyyy HH:mm:ss z", "EEE dd-MMM-yyyy HH-mm-ss z",
+            "EEE dd-MMM-yy HH:mm:ss z", "EEE dd MMM yy HH:mm:ss z", "EEE,dd-MMM-yy HH:mm:ss z",
+            "EEE,dd-MMM-yyyy HH:mm:ss z", "EEE, dd-MM-yyyy HH:mm:ss z", "E, dd-MMM-yyyy HH:mm:ss zzz",
+            "EEEE, dd-MMM-yy HH:mm:ss zzz" };
+
+    protected final static TrustManager trustAllManager = new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+    };
+
+    protected final static CookieSpecProvider cookieSpecProvide = context1 -> new DefaultCookieSpec(DATE_PATTERNS,false){
+        @Override
+        public void validate(Cookie cookie, CookieOrigin origin) throws MalformedCookieException {
+        }
+    };
+
+
+    public HttpClient() {
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContexts.createDefault();
+            sslContext.init(null, new TrustManager[]{trustAllManager}, null);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, null, null, NoopHostnameVerifier.INSTANCE);
+        Registry<CookieSpecProvider> registry = RegistryBuilder.<CookieSpecProvider>create()
+                .register(defaultCookieSpecName,cookieSpecProvide).build();
+
+        client = HttpClients.custom().setSSLSocketFactory(sslsf)
+                .setRetryHandler(new DefaultHttpRequestRetryHandler(0,false))
+                .setDefaultCookieSpecRegistry(registry)
+                .setDefaultCookieStore(cookieStore)
+                .build();
+        context = new HttpClientContext();
+    }
 
 
     private void setHeaders(HttpRequestBase requestBase, Map<String, String> headers) {
@@ -102,11 +168,11 @@ public class HttpClient implements Closeable, AutoCloseable {
         }
         setHeaders(request, headers);
         setRequestConfig(request);
-        return doRequest(method,url);
+        return doRequest(method, url);
     }
 
-    protected HttpResponse execute(HttpMethod method, String url, Map<String,String>headers, List<NameValuePair>params){
-        return execute(method,url,headers,params,"utf-8");
+    protected HttpResponse execute(HttpMethod method, String url, Map<String, String> headers, List<NameValuePair> params) {
+        return execute(method, url, headers, params, "utf-8");
     }
 
     protected HttpResponse execute(HttpMethod method, String url, Map<String, String> headers, Map<String, ?> params, String encoding) {
@@ -124,7 +190,7 @@ public class HttpClient implements Closeable, AutoCloseable {
         lastStatus = 0;
         setHeaders(request, headers);
         setRequestConfig(request);
-        return doRequest(HttpMethod.POST,url);
+        return doRequest(HttpMethod.POST, url);
     }
 
     protected HttpResponse execute(String url, Map<String, String> headers, String data, ContentType type) {
@@ -153,13 +219,13 @@ public class HttpClient implements Closeable, AutoCloseable {
     }
 
     private HttpResponse doRequest(HttpMethod method, String url) {
-        FutureTask<HttpResponse> task = new FutureTask<>(() ->{
-            try{
-                response = client.execute(request,context);
+        FutureTask<HttpResponse> task = new FutureTask<>(() -> {
+            try {
+                response = client.execute(request, context);
                 lastStatus = response.getStatusLine().getStatusCode();
-                switch (method){
+                switch (method) {
                     case POST:
-                        if (lastStatus / 100 == 3){
+                        if (lastStatus / 100 == 3) {
                             String location = response.getFirstHeader("Location").getValue();
                             response.close();
                             return null;
@@ -171,16 +237,16 @@ public class HttpClient implements Closeable, AutoCloseable {
                     default:
                         throw new IllegalArgumentException();
                 }
-                return new HttpResponse(context,lastStatus);
-            }catch (ConnectTimeoutException e){
+                return new HttpResponse(context, lastStatus);
+            } catch (ConnectTimeoutException e) {
                 e.printStackTrace();
                 return null;
-            }finally {
-                if (response != null){
-                    try{
+            } finally {
+                if (response != null) {
+                    try {
                         response.close();
-                    }catch (IOException e){
-                       LoggerFactory.getLogger("BaseLog").error("response 关闭失败",e);
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger("BaseLog").error("response 关闭失败", e);
                     }
                 }
             }
@@ -188,96 +254,96 @@ public class HttpClient implements Closeable, AutoCloseable {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
-        try{
+        try {
             return task.get(maxTimeout == -1 ? defaultMaxTimeout : maxTimeout, TimeUnit.MILLISECONDS);
         } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException("遇到系统问题",e);
+            throw new RuntimeException("遇到系统问题", e);
         } catch (TimeoutException e) {
             e.printStackTrace();
             return null;
-        }finally {
+        } finally {
             thread.interrupt();
         }
     }
 
-    public HttpResponse get(String url){
-        return get(url,null);
+    public HttpResponse get(String url) {
+        return get(url, null);
     }
 
-    public HttpResponse get(String url, Map<String,String>headers){
-        return execute(HttpMethod.GET,url,headers,(List<NameValuePair>) null);
+    public HttpResponse get(String url, Map<String, String> headers) {
+        return execute(HttpMethod.GET, url, headers, (List<NameValuePair>) null);
 
     }
 
-    public HttpResponse post(String url,List<NameValuePair> params){
-        return post(url,null,params);
+    public HttpResponse post(String url, List<NameValuePair> params) {
+        return post(url, null, params);
     }
 
-    public HttpResponse post(String url, Map<String,String>headers,List<NameValuePair>params){
-        return execute(HttpMethod.POST,url,headers,params);
+    public HttpResponse post(String url, Map<String, String> headers, List<NameValuePair> params) {
+        return execute(HttpMethod.POST, url, headers, params);
     }
 
-    public HttpResponse post(String url, Map<String,String> headers, String params,ContentType contentType){
-        return execute(url,headers,params,contentType);
+    public HttpResponse post(String url, Map<String, String> headers, String params, ContentType contentType) {
+        return execute(url, headers, params, contentType);
     }
 
-    public HttpResponse post(String url, String params, ContentType contentType){
-        return post(url,null,params,contentType);
+    public HttpResponse post(String url, String params, ContentType contentType) {
+        return post(url, null, params, contentType);
     }
 
-    public HttpResponse post(String url, String params){
-        return post(url,params,ContentType.TEXT_PLAIN);
+    public HttpResponse post(String url, String params) {
+        return post(url, params, ContentType.TEXT_PLAIN);
     }
 
-    public HttpResponse post(String url, Map<String,String>headers, HttpEntity entity){
-        return execute(url,headers,entity);
+    public HttpResponse post(String url, Map<String, String> headers, HttpEntity entity) {
+        return execute(url, headers, entity);
     }
 
-    public HttpResponse post(String url, Map<String,String> headers, Map<String,?> params, String encoding){
-        return execute(HttpMethod.POST,url,headers,params,encoding);
+    public HttpResponse post(String url, Map<String, String> headers, Map<String, ?> params, String encoding) {
+        return execute(HttpMethod.POST, url, headers, params, encoding);
     }
 
-    public HttpResponse post(String url, Map<String,String> headers, Map<String,?> params){
-        return post(url,headers,params,"utf-8");
+    public HttpResponse post(String url, Map<String, String> headers, Map<String, ?> params) {
+        return post(url, headers, params, "utf-8");
     }
 
-    public HttpResponse post(String url, Map<String,?> params){
-        return post(url,null,params);
+    public HttpResponse post(String url, Map<String, ?> params) {
+        return post(url, null, params);
     }
 
-    public HttpResponse delete(String url, Map<String,String> headers){
-        return execute(HttpMethod.DELETE,url,headers, (List<NameValuePair>) null);
+    public HttpResponse delete(String url, Map<String, String> headers) {
+        return execute(HttpMethod.DELETE, url, headers, (List<NameValuePair>) null);
     }
 
-    public HttpResponse delete(String url){
-        return delete(url,null);
+    public HttpResponse delete(String url) {
+        return delete(url, null);
     }
 
-    public List<Cookie> getCookies(){
+    public List<Cookie> getCookies() {
         return cookieStore.getCookies();
     }
 
-    public HttpProxy getProxy(){
+    public HttpProxy getProxy() {
         return proxy;
     }
 
-    public void setProxy(HttpProxy proxy){
+    public void setProxy(HttpProxy proxy) {
         this.proxy = proxy;
     }
 
-    public void setProxy(String host, String port){
-        this.proxy = new HttpProxy(host,Integer.parseInt(port),null);
+    public void setProxy(String host, String port) {
+        this.proxy = new HttpProxy(host, Integer.parseInt(port), null);
     }
 
-    public void setProxy(String host, int port){
-        this.proxy = new HttpProxy(host,port,null);
+    public void setProxy(String host, int port) {
+        this.proxy = new HttpProxy(host, port, null);
     }
 
-    public void setMaxTimeout(int mill){
+    public void setMaxTimeout(int mill) {
         this.maxTimeout = mill;
     }
 
-    public void removeProxy(){
+    public void removeProxy() {
         this.proxy = null;
     }
 
