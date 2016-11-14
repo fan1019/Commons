@@ -347,6 +347,10 @@ public class HttpClient implements Closeable, AutoCloseable {
         this.proxy = null;
     }
 
+    public void setMaxRedirect(int maxRedirect){
+        this.maxRedirect = maxRedirect;
+    }
+
     @Override
     public void close() {
         try {
