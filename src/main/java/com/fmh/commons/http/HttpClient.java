@@ -2,13 +2,16 @@ package com.fmh.commons.http;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.LoggerFactory;
@@ -42,6 +45,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     protected int maxTimeout = -1;
     protected HttpProxy proxy = null;
     protected int lastStatus;
+    protected CookieStore cookieStore = new BasicCookieStore();
 
 
     private void setHeaders(HttpRequestBase requestBase, Map<String, String> headers) {
@@ -201,7 +205,7 @@ public class HttpClient implements Closeable, AutoCloseable {
     }
 
     public HttpResponse get(String url, Map<String,String>headers){
-        return execute(url,headers,null);
+        return execute(HttpMethod.GET,url,headers,(List<NameValuePair>) null);
 
     }
 
@@ -221,10 +225,70 @@ public class HttpClient implements Closeable, AutoCloseable {
         return post(url,null,params,contentType);
     }
 
-    public HttpResponse post(String url, Map<String,String>headers, HttpEntity entity)
+    public HttpResponse post(String url, String params){
+        return post(url,params,ContentType.TEXT_PLAIN);
+    }
+
+    public HttpResponse post(String url, Map<String,String>headers, HttpEntity entity){
+        return execute(url,headers,entity);
+    }
+
+    public HttpResponse post(String url, Map<String,String> headers, Map<String,?> params, String encoding){
+        return execute(HttpMethod.POST,url,headers,params,encoding);
+    }
+
+    public HttpResponse post(String url, Map<String,String> headers, Map<String,?> params){
+        return post(url,headers,params,"utf-8");
+    }
+
+    public HttpResponse post(String url, Map<String,?> params){
+        return post(url,null,params);
+    }
+
+    public HttpResponse delete(String url, Map<String,String> headers){
+        return execute(HttpMethod.DELETE,url,headers, (List<NameValuePair>) null);
+    }
+
+    public HttpResponse delete(String url){
+        return delete(url,null);
+    }
+
+    public List<Cookie> getCookies(){
+        return cookieStore.getCookies();
+    }
+
+    public HttpProxy getProxy(){
+        return proxy;
+    }
+
+    public void setProxy(HttpProxy proxy){
+        this.proxy = proxy;
+    }
+
+    public void setProxy(String host, String port){
+        this.proxy = new HttpProxy(host,Integer.parseInt(port),null);
+    }
+
+    public void setProxy(String host, int port){
+        this.proxy = new HttpProxy(host,port,null);
+    }
+
+    public void setMaxTimeout(int mill){
+        this.maxTimeout = mill;
+    }
+
+    public void removeProxy(){
+        this.proxy = null;
+    }
 
     @Override
     public void close() {
-
+        try {
+            if (client != null) {
+                client.close();
+            }
+        } catch (IOException e) {
+            System.err.println("SimpleHttpClient close error");
+        }
     }
 }
