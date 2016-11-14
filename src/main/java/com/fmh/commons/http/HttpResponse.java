@@ -241,7 +241,7 @@ public class HttpResponse {
                         if (contentType.getMimeType() == null) {
                             return Jsoup.parse(new String(content, charset), url, Parser.htmlParser());
                         } else {
-                            return Jsoup.parse(new String(content,charset), url,
+                            return Jsoup.parse(new String(content, charset), url,
                                     "text/html".equals(contentType.getMimeType()) ?
                                             Parser.htmlParser() : Parser.xmlParser());
                         }
@@ -251,13 +251,27 @@ public class HttpResponse {
         }
     }
 
-    public Header[] getHeaders(){
+    public Header[] getHeaders() {
         return headers.clone();
     }
 
-    public String getMD5(){
+    public String getMD5() {
         return DigestUtils.md5Hex(content);
     }
 
+    public String getUrl() {
+        return url;
+    }
 
+    public String toString() {
+        if (content != null) {
+            if (contentType == null || contentType.getCharset() == null) {
+                return new String(content, Charset.forName("ISO-8859-1"));
+            } else {
+                return new String(content, contentType.getCharset());
+            }
+        } else {
+            return "返回码："+statusCode;
+        }
+    }
 }
