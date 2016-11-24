@@ -7,6 +7,8 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CountOptions;
+import com.sun.org.apache.regexp.internal.REUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -112,7 +114,7 @@ public class MongoClientBase {
 		return database.getCollection(table).find(query);
 	}
 
-	public Document findOne(final String table, Document query){
+	public Document findOne(final String table, final Document query){
 		if (!checkTable(table)){
 			Loggers.STDOUT.error("table error!");
 			return null;
@@ -120,7 +122,7 @@ public class MongoClientBase {
 		return find(table,query).first();
 	}
 
-	public Document get(String table, Object id){
+	public Document get(final String table, final Object id){
 		if (!checkTable(table)){
 			Loggers.STDOUT.error("table error!");
 			return null;
@@ -128,5 +130,26 @@ public class MongoClientBase {
 		return database.getCollection(table).find(eq("_id",id)).first();
 	}
 
+	public Long count(final String table){
+		return count(table,null);
+	}
 
+	public Long count(final String table, final Document query){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return 0L;
+		}
+		return database.getCollection(table).count(query);
+	}
+
+	public Long count(final String table, final Document query, final int skip, final int limit){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return 0L;
+		}
+		CountOptions options = new CountOptions();
+		options.skip(skip);
+		options.limit(limit < 0 ? 0 : limit);
+		return database.getCollection(table).count(query,options);
+	}
 }
