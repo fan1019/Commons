@@ -1,8 +1,13 @@
 package com.fmh.commons.mongo;
 
-import com.mongodb.*;
+import com.fmh.commons.log.Loggers;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -57,5 +62,25 @@ public class MongoClientBase {
 		setMongoClientOptions(MongoClient.getDefaultCodecRegistry());
 		mongo = new MongoClient(serverAddressList, mongoClientOptions);
 		database = mongo.getDatabase(db);
+	}
+
+	public FindIterable<Document> find(final String table, final Document query, final Document order, final int skip, final int limit){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).find(query).sort(order).skip(skip).limit(limit < 0 ? 0 : limit);
+	}
+
+	public FindIterable<Document> find(final String table, final Document query){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return find(table,query,null,0,0);
+	}
+
+	public FindIterable<Document> find(final String table, final String queryfield){
+
 	}
 }
