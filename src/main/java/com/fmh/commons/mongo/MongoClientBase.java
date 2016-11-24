@@ -15,7 +15,7 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static java.util.Arrays.asList;
 
 public class MongoClientBase {
@@ -93,7 +93,40 @@ public class MongoClientBase {
 			case eq:
 				query = eq(queryfield,queryVlaue);
 				break;
+			case ne:
+				query = ne(queryfield,queryVlaue);
+				break;
+			case gt:
+				query = gt(queryfield,queryVlaue);
+				break;
+			case gte:
+				query = gte(queryfield,queryVlaue);
+				break;
+			case lt:
+				query = lt(queryfield,queryVlaue);
+				break;
+			case lte:
+				query = lte(queryfield,queryVlaue);
+				break;
 		}
 		return database.getCollection(table).find(query);
 	}
+
+	public Document findOne(final String table, Document query){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return find(table,query).first();
+	}
+
+	public Document get(String table, Object id){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).find(eq("_id",id)).first();
+	}
+
+
 }
