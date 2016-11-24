@@ -5,16 +5,16 @@ import com.fmh.commons.log.Loggers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
-import com.sun.org.apache.regexp.internal.REUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Iterator;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
@@ -31,7 +31,7 @@ public class MongoClientBase {
 
 	}
 
-	protected boolean checkTable(String table){
+	protected boolean checkTable(String table) {
 		return !StringUtils.isEmpty(table);
 	}
 
@@ -56,10 +56,10 @@ public class MongoClientBase {
 		database = mongo.getDatabase(db);
 	}
 
-	public MongoClientBase(String host, String db){
-		address = new ServerAddress(host,27017);
+	public MongoClientBase(String host, String db) {
+		address = new ServerAddress(host, 27017);
 		setMongoClientOptions(MongoClient.getDefaultCodecRegistry());
-		mongo = new MongoClient(address,mongoClientOptions);
+		mongo = new MongoClient(address, mongoClientOptions);
 		database = mongo.getDatabase(db);
 	}
 
@@ -69,87 +69,128 @@ public class MongoClientBase {
 		database = mongo.getDatabase(db);
 	}
 
-	public FindIterable<Document> find(final String table, final Document query, final Document order, final int skip, final int limit){
-		if (!checkTable(table)){
+	public MongoCursor<Document> find(final String table, final Document query, final Document order, final int skip, final int limit) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return database.getCollection(table).find(query).sort(order).skip(skip).limit(limit < 0 ? 0 : limit);
+		return database.getCollection(table).find(query).sort(order).skip(skip).limit(limit < 0 ? 0 : limit).iterator();
 	}
 
-	public FindIterable<Document> find(final String table, final Document query){
-		if (!checkTable(table)){
+	public MongoCursor<Document> find(final String table, final Document query) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return find(table,query,null,0,0);
+		return find(table, query, null, 0, 0);
 	}
 
-	public <T> FindIterable<Document> find(final String table, final String queryfield, final T queryVlaue, final FilterType type){
-		if (!checkTable(table)){
+	public <T> MongoCursor<Document> find(final String table, final String queryfield, final T queryVlaue, final FilterType type) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
 		Bson query = null;
-		switch (type){
+		switch (type) {
 			case eq:
-				query = eq(queryfield,queryVlaue);
+				query = eq(queryfield, queryVlaue);
 				break;
 			case ne:
-				query = ne(queryfield,queryVlaue);
+				query = ne(queryfield, queryVlaue);
 				break;
 			case gt:
-				query = gt(queryfield,queryVlaue);
+				query = gt(queryfield, queryVlaue);
 				break;
 			case gte:
-				query = gte(queryfield,queryVlaue);
+				query = gte(queryfield, queryVlaue);
 				break;
 			case lt:
-				query = lt(queryfield,queryVlaue);
+				query = lt(queryfield, queryVlaue);
 				break;
 			case lte:
-				query = lte(queryfield,queryVlaue);
+				query = lte(queryfield, queryVlaue);
 				break;
 		}
-		return database.getCollection(table).find(query);
+		return database.getCollection(table).find(query).iterator();
 	}
 
-	public Document findOne(final String table, final Document query){
-		if (!checkTable(table)){
+	public Iterable<Object> ids(final String table, final Document query, final Document order, final int skip, final int limit) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return find(table,query).first();
+		MongoCursor<Document> cursor = find(table, query, order, skip, limit);
+		return cursor == null ? null : () -> new Iterator<Object>() {
+			@Override
+			public boolean hasNext() {
+				if (!cursor.hasNext()) {
+					cursor.close();
+					return false;
+				} else {
+					return true;
+				}
+			}
+
+			@Override
+			public String next() {
+				Document doc = cursor.next();
+				return doc == null ? null : (String) doc.get("_id");
+			}
+		};
 	}
 
-	public Document get(final String table, final Object id){
-		if (!checkTable(table)){
+	public Iterable<Object> ids(final String table, final Document query){
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return database.getCollection(table).find(eq("_id",id)).first();
+		return ids(table,query,null,0,0);
 	}
 
-	public Long count(final String table){
-		return count(table,null);
+	public Document findOne(final String table, final Document query) {
+		if (!checkTable(table)) {
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).find(query).first();
 	}
 
-	public Long count(final String table, final Document query){
-		if (!checkTable(table)){
+	public Document get(final String table, final Object id) {
+		if (!checkTable(table)) {
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).find(eq("_id", id)).first();
+	}
+
+	public Long count(final String table) {
+		return count(table, null);
+	}
+
+	public Long count(final String table, final Document query) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return 0L;
 		}
 		return database.getCollection(table).count(query);
 	}
 
-	public Long count(final String table, final Document query, final int skip, final int limit){
-		if (!checkTable(table)){
+	public Long count(final String table, final Document query, final int skip, final int limit) {
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return 0L;
 		}
 		CountOptions options = new CountOptions();
 		options.skip(skip);
 		options.limit(limit < 0 ? 0 : limit);
-		return database.getCollection(table).count(query,options);
+		return database.getCollection(table).count(query, options);
+	}
+
+	public Document delete(final String table, final Object id) {
+		if (!checkTable(table)) {
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).findOneAndDelete(eq("_id", id));
 	}
 }
