@@ -1,5 +1,6 @@
 package com.fmh.commons.mongo;
 
+
 import com.fmh.commons.log.Loggers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
@@ -10,9 +11,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.List;
 
+import static com.mongodb.client.model.Filters.eq;
 import static java.util.Arrays.asList;
 
 public class MongoClientBase {
@@ -80,7 +83,17 @@ public class MongoClientBase {
 		return find(table,query,null,0,0);
 	}
 
-	public FindIterable<Document> find(final String table, final String queryfield){
-
+	public <T> FindIterable<Document> find(final String table, final String queryfield, final T queryVlaue, final FilterType type){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		Bson query = null;
+		switch (type){
+			case eq:
+				query = eq(queryfield,queryVlaue);
+				break;
+		}
+		return database.getCollection(table).find(query);
 	}
 }
