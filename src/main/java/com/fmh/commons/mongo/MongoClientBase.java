@@ -193,4 +193,21 @@ public class MongoClientBase {
 		}
 		return database.getCollection(table).findOneAndDelete(eq("_id", id));
 	}
+
+	public boolean deleteOne(final String table, final Document query){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return false;
+		}
+		Long count = database.getCollection(table).deleteOne(query).getDeletedCount();
+		return count == 1L;
+	}
+
+	public Long deleteMany(final String table, final Document query){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return 0L;
+		}
+		return database.getCollection(table).deleteMany(query).getDeletedCount();
+	}
 }
