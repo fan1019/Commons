@@ -8,6 +8,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.InsertManyOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -210,4 +211,29 @@ public class MongoClientBase {
 		}
 		return database.getCollection(table).deleteMany(query).getDeletedCount();
 	}
+
+	public void insert(final String table, final Document document){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		database.getCollection(table).insertOne(document);
+	}
+
+	public void insert(final String table, final List<? extends Document> documents){
+		insert(table,documents,false);
+	}
+
+	public void insert(final String table, final List<? extends Document> documents, final boolean order){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		InsertManyOptions options = new InsertManyOptions();
+		options.ordered(order);
+		database.getCollection(table).insertMany(documents,options);
+	}
+
+
+
 }
