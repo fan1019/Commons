@@ -88,5 +88,13 @@ public class MongoClientBaseTest {
 			System.out.println(ids.next());
 		}
 	}
+
+	@Test
+	public void test12(){
+		Iterator<Object> ids = client.ids("test",new Document("name","minghui"),new Document("_id",-1),2,2).iterator();
+		while (ids.hasNext()){
+			System.out.println(ids.next());
+		}
+	}
 }
 
