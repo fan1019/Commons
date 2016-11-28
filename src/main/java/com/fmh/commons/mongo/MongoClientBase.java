@@ -134,9 +134,9 @@ public class MongoClientBase {
 			}
 
 			@Override
-			public String next() {
+			public Object next() {
 				Document doc = cursor.next();
-				return doc == null ? null : (String) doc.get("_id");
+				return doc == null ? null : doc.get("_id");
 			}
 		};
 	}

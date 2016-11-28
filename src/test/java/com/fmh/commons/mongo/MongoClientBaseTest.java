@@ -5,6 +5,7 @@ import org.bson.Document;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class MongoClientBaseTest {
@@ -59,6 +60,32 @@ public class MongoClientBaseTest {
 		for (MongoCursor<Document> it = client.find("test", new Document("name", "minghui"),new Document("_id",-1),1,3); it.hasNext(); ) {
 			Document doc = it.next();
 			System.out.println(doc);
+		}
+	}
+
+	@Test
+	public void test8(){
+		System.out.println(client.findOne("test",new Document("name","minghui")));
+	}
+
+	@Test
+	public void test9(){
+		for (MongoCursor<Document> it = client.find("test","name","minghui",FilterType.eq); it.hasNext(); ) {
+			Document doc = it.next();
+			System.out.println(doc);
+		}
+	}
+
+	@Test
+	public void test10(){
+		System.out.println(client.get("test",2));
+	}
+
+	@Test
+	public void test11(){
+		Iterator<Object> ids = client.ids("test",new Document("name","minghui")).iterator();
+		while (ids.hasNext()){
+			System.out.println(ids.next());
 		}
 	}
 }
