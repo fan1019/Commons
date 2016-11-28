@@ -96,5 +96,9 @@ public class MongoClientBaseTest {
 			System.out.println(ids.next());
 		}
 	}
+
+	public void test13(){
+
+	}
 }
 
