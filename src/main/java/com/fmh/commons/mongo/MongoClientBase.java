@@ -11,7 +11,6 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.FileAppender;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -19,7 +18,6 @@ import org.bson.conversions.Bson;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
 
 import static com.mongodb.client.model.Filters.*;
 import static java.util.Arrays.asList;
