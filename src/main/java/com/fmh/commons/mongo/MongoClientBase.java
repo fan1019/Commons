@@ -263,7 +263,7 @@ public class MongoClientBase {
 		return database.getCollection(table).findOneAndReplace(query,replace);
 	}
 
-	public UpdateResult replace(final String table, final Document query, final Document replace, Boolean upsert){
+	public UpdateResult replaceOne(final String table, final Document query, final Document replace, Boolean upsert){
 		if (!checkTable(table)){
 			Loggers.STDOUT.error("table error!");
 			return null;

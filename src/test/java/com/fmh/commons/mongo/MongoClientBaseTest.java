@@ -120,5 +120,12 @@ public class MongoClientBaseTest {
 		doc.put("name","minghui6");
 		System.out.println(client.replaceOne("test", new Document("_id",3),doc));
 	}
+
+	@Test
+	public void test17(){
+		Document doc = new Document();
+		doc.put("name","minghui6");
+		System.out.println(client.replaceOne("test", new Document("_id",6),doc,true));
+	}
 }
 
