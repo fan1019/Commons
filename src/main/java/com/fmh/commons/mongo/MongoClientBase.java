@@ -300,4 +300,12 @@ public class MongoClientBase {
 		return database.getCollection(table).createIndex(new Document(key,1));
 	}
 
+	public void dropIndex(final String table, final String key){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		database.getCollection(table).dropIndex(key);
+	}
+
 }
