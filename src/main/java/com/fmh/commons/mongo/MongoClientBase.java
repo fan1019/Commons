@@ -5,6 +5,7 @@ import com.fmh.commons.log.Loggers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
+import com.mongodb.Tag;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
@@ -17,12 +18,12 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import javax.swing.*;
 import java.util.Iterator;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 import static java.util.Arrays.asList;
-import static java.util.Arrays.setAll;
 
 public class MongoClientBase {
 
@@ -271,6 +272,32 @@ public class MongoClientBase {
 		UpdateOptions options = new UpdateOptions();
 		options.upsert(upsert);
 		return database.getCollection(table).replaceOne(query,replace,options);
+	}
+
+	public void dropTable(final String table){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return ;
+		}
+		database.getCollection(table).drop();
+	}
+
+	public void createIndexes(final String table, final List<String> keys){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return ;
+		}
+		for (String key : keys){
+
+		}
+	}
+
+	public String createIndex(final String table, final String key){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).createIndex(new Document(key,1));
 	}
 
 }

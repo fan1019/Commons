@@ -1,5 +1,6 @@
 package com.fmh.commons.mongo;
 
+import com.mongodb.Tag;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.junit.Test;
@@ -126,6 +127,11 @@ public class MongoClientBaseTest {
 		Document doc = new Document();
 		doc.put("name","minghui6");
 		System.out.println(client.replaceOne("test", new Document("_id",6),doc,true));
+	}
+
+	@Test
+	public void test18(){
+		System.out.println(client.createIndex("test","name"));
 	}
 }
 
