@@ -21,6 +21,7 @@ import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.setAll;
 
 public class MongoClientBase {
 
@@ -236,11 +237,12 @@ public class MongoClientBase {
 	}
 
 	public Document updateOne(final String table, final Document query, final Document update){
-		if (!checkTable(table)){
+		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return database.getCollection(table).findOneAndUpdate(query,update);
+		Document up = new Document("$set",update);
+		return database.getCollection(table).findOneAndUpdate(query,up);
 	}
 
 	public UpdateResult updateMany(final String table, final Document query, final Document update){
@@ -248,7 +250,8 @@ public class MongoClientBase {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return database.getCollection(table).updateMany(query,update);
+		Document up = new Document("$set",update);
+		return database.getCollection(table).updateMany(query,up);
 	}
 
 

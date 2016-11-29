@@ -97,8 +97,21 @@ public class MongoClientBaseTest {
 		}
 	}
 
+	@Test
 	public void test13(){
+		System.out.println(client.delete("test",2));
+	}
 
+	@Test
+	public void test14(){
+		Document doc = new Document("name","minghui2");
+		System.out.println(client.updateOne("test",new Document("_id",3),doc));
+	}
+
+	@Test
+	public void test15(){
+		Document doc = new Document("sex",3);
+		System.out.println(client.updateMany("test",new Document("name","minghui"),doc));
 	}
 }
 
