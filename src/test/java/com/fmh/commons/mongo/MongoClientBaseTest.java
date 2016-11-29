@@ -113,5 +113,12 @@ public class MongoClientBaseTest {
 		Document doc = new Document("sex",3);
 		System.out.println(client.updateMany("test",new Document("name","minghui"),doc));
 	}
+
+	@Test
+	public void test16(){
+		Document doc = new Document();
+		doc.put("name","minghui6");
+		System.out.println(client.replaceOne("test", new Document("_id",3),doc));
+	}
 }
 

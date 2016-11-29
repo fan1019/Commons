@@ -9,6 +9,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -254,5 +255,22 @@ public class MongoClientBase {
 		return database.getCollection(table).updateMany(query,up);
 	}
 
+	public Document replaceOne(final String table, final Document query, final Document replace){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).findOneAndReplace(query,replace);
+	}
+
+	public UpdateResult replace(final String table, final Document query, final Document replace, Boolean upsert){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		UpdateOptions options = new UpdateOptions();
+		options.upsert(upsert);
+		return database.getCollection(table).replaceOne(query,replace,options);
+	}
 
 }
