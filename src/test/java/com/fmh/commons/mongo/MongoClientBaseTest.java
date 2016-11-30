@@ -6,6 +6,7 @@ import org.bson.Document;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -137,6 +138,11 @@ public class MongoClientBaseTest {
 	@Test
 	public void test19(){
 		client.dropIndex("test","name");
+	}
+
+	@Test
+	public void test20(){
+		client.createIndexes("test", Arrays.asList("name","sex"));
 	}
 }
 

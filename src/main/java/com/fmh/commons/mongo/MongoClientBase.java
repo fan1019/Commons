@@ -9,6 +9,7 @@ import com.mongodb.Tag;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
@@ -21,6 +22,7 @@ import org.bson.conversions.Bson;
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
 import static java.util.Arrays.asList;
@@ -287,9 +289,9 @@ public class MongoClientBase {
 			Loggers.STDOUT.error("table error!");
 			return ;
 		}
-		for (String key : keys){
-
-		}
+		List<IndexModel> indexList = keys.stream().map(x -> new IndexModel(new Document(x,1)))
+				.collect(Collectors.toList());
+		database.getCollection(table).createIndexes(indexList);
 	}
 
 	public String createIndex(final String table, final String key){
