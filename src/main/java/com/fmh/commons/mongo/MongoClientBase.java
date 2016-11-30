@@ -4,8 +4,8 @@ package com.fmh.commons.mongo;
 import com.fmh.commons.log.Loggers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
-import com.mongodb.Tag;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
@@ -19,7 +19,6 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import javax.swing.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -310,4 +309,12 @@ public class MongoClientBase {
 		database.getCollection(table).dropIndex(new Document(key,1));
 	}
 
+	public void renameCollection(final String table, final String newTableName){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		MongoNamespace namespace = new MongoNamespace(database.getName(),newTableName);
+		database.getCollection(table).renameCollection(namespace);
+	}
 }

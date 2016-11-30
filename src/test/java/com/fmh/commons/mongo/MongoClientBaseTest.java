@@ -144,5 +144,10 @@ public class MongoClientBaseTest {
 	public void test20(){
 		client.createIndexes("test", Arrays.asList("name","sex"));
 	}
+
+	@Test
+	public void test21(){
+		client.renameCollection("test","test1");
+	}
 }
 
