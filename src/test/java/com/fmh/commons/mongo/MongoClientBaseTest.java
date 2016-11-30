@@ -133,5 +133,10 @@ public class MongoClientBaseTest {
 	public void test18(){
 		System.out.println(client.createIndex("test","name"));
 	}
+
+	@Test
+	public void test19(){
+		client.dropIndex("test","name");
+	}
 }
 

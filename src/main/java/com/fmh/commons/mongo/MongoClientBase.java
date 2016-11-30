@@ -305,7 +305,7 @@ public class MongoClientBase {
 			Loggers.STDOUT.error("table error!");
 			return;
 		}
-		database.getCollection(table).dropIndex(key);
+		database.getCollection(table).dropIndex(new Document(key,1));
 	}
 
 }
