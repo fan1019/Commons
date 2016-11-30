@@ -8,10 +8,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.IndexModel;
-import com.mongodb.client.model.InsertManyOptions;
-import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -316,5 +313,16 @@ public class MongoClientBase {
 		}
 		MongoNamespace namespace = new MongoNamespace(database.getName(),newTableName);
 		database.getCollection(table).renameCollection(namespace);
+	}
+
+	public void renameCollection(final String table, final String newTableName, final Boolean dropTarget){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		MongoNamespace namespace = new MongoNamespace(database.getName(),newTableName);
+		RenameCollectionOptions options = new RenameCollectionOptions();
+		options.dropTarget(dropTarget);
+		database.getCollection(table).renameCollection(namespace,options);
 	}
 }

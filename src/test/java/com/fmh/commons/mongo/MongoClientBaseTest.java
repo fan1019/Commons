@@ -149,5 +149,10 @@ public class MongoClientBaseTest {
 	public void test21(){
 		client.renameCollection("test","test1");
 	}
+
+	@Test
+	public void test22(){
+		client.renameCollection("test1","test2",true);
+	}
 }
 
