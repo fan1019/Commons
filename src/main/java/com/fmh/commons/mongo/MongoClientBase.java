@@ -325,4 +325,12 @@ public class MongoClientBase {
 		options.dropTarget(dropTarget);
 		database.getCollection(table).renameCollection(namespace,options);
 	}
+
+	public Iterable<Document> aggregate(final String table, final List<? extends Bson> pipeline){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).aggregate(pipeline);
+	}
 }
