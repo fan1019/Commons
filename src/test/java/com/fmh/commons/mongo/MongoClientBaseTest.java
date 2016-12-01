@@ -171,5 +171,28 @@ public class MongoClientBaseTest {
 			System.out.println(doc);
 		}
 	}
+
+	@Test
+	public void test24(){
+		Iterator<Document> it = client.listCollections().iterator();
+		while (it.hasNext()){
+			System.out.println(it.next());
+		}
+	}
+
+	@Test
+	public void test25(){
+		System.out.println(client.getDatabase());
+	}
+
+	@Test
+	public void test26(){
+		System.out.println(client.getHost());
+	}
+
+	@Test
+	public void test27(){
+		System.out.println(client.getPort());
+	}
 }
 
