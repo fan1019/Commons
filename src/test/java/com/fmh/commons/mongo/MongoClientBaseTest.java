@@ -4,6 +4,7 @@ import com.mongodb.Tag;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.junit.Test;
+import org.omg.DynamicAny._DynAnyFactoryStub;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,12 +148,28 @@ public class MongoClientBaseTest {
 
 	@Test
 	public void test21(){
-		client.renameCollection("test","test1");
+		client.renameCollection("test2","test");
 	}
 
 	@Test
 	public void test22(){
 		client.renameCollection("test1","test2",true);
+	}
+
+	@Test
+	public void test23(){
+		List<Document> pipeline = new ArrayList<>();
+		Document match = new Document("$match", new Document("name","minghui"));
+		Document group = new Document("$group", new Document("_id","$name").append("total",new Document("$sum","$count")));
+		Document sort = new Document("$sort", new Document("total",-1));
+		pipeline.add(match);
+		pipeline.add(group);
+		pipeline.add(sort);
+		Iterator<Document> it = client.aggregate("test",pipeline).iterator();
+		while (it.hasNext()){
+			Document doc = it.next();
+			System.out.println(doc);
+		}
 	}
 }
 
