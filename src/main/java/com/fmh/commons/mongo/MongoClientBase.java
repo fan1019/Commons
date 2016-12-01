@@ -333,4 +333,20 @@ public class MongoClientBase {
 		}
 		return database.getCollection(table).aggregate(pipeline);
 	}
+
+	public Iterable<Document> listCollections(){
+		return database.listCollections();
+	}
+
+	public String getDatabase(){
+		return database.getName();
+	}
+
+	public String getHost(){
+		return address.getHost();
+	}
+
+	public int getPort(){
+		return address.getPort();
+	}
 }
