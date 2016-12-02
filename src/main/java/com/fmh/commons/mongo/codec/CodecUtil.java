@@ -47,7 +47,7 @@ public class CodecUtil {
 		return map;
 	}
 
-	public void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value, final CodecRegistry registry) {
+	public static void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value, final CodecRegistry registry) {
 		if (value == null) {
 			writer.writeNull();
 		} else if (value instanceof Iterable) {
@@ -60,7 +60,7 @@ public class CodecUtil {
 		}
 	}
 
-	public void writeIterable(final BsonWriter writer, final Iterable<Object> list, final EncoderContext encoderContext, final CodecRegistry registry) {
+	public static void writeIterable(final BsonWriter writer, final Iterable<?> list, final EncoderContext encoderContext, final CodecRegistry registry) {
 		writer.writeStartArray();
 		for (final Object value : list) {
 			writeValue(writer, encoderContext, value,registry);
@@ -68,9 +68,9 @@ public class CodecUtil {
 		writer.writeEndArray();
 	}
 
-	public void writeMap(final BsonWriter writer, final Map<String, Object> map, final EncoderContext encoderContext, final CodecRegistry registry) {
+	public static void writeMap(final BsonWriter writer, final Map<String, ?> map, final EncoderContext encoderContext, final CodecRegistry registry) {
 		writer.writeStartDocument();
-		for (final Map.Entry<String, Object> entry : map.entrySet()) {
+		for (final Map.Entry<String, ?> entry : map.entrySet()) {
 			writer.writeName(entry.getKey());
 			writeValue(writer, encoderContext, entry.getValue(),registry);
 		}

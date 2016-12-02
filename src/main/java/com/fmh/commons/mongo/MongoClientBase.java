@@ -16,6 +16,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class MongoClientBase {
 	private MongoClient mongo;
 	private ServerAddress address;
 	private MongoClientOptions mongoClientOptions;
+	private Class documentClass = Document.class;
 
 
 	protected boolean checkTable(String table) {
@@ -50,17 +52,11 @@ public class MongoClientBase {
 	}
 
 	public MongoClientBase(String host, int port, String db) {
-		address = new ServerAddress(host, port);
-		setMongoClientOptions(MongoClient.getDefaultCodecRegistry());
-		mongo = new MongoClient(address, mongoClientOptions);
-		database = mongo.getDatabase(db);
+		this(host,port,db,MongoClient.getDefaultCodecRegistry());
 	}
 
 	public MongoClientBase(String host, String db) {
-		address = new ServerAddress(host, 27017);
-		setMongoClientOptions(MongoClient.getDefaultCodecRegistry());
-		mongo = new MongoClient(address, mongoClientOptions);
-		database = mongo.getDatabase(db);
+		this(host,27017,db,MongoClient.getDefaultCodecRegistry());
 	}
 
 	public MongoClientBase(List<ServerAddress> serverAddressList, String db) {
@@ -217,6 +213,14 @@ public class MongoClientBase {
 			return;
 		}
 		database.getCollection(table).insertOne(document);
+	}
+
+	public void insert(final String table, final Object document, final Class Clazz){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return;
+		}
+		database.getCollection(table,Clazz).insertOne(document);
 	}
 
 	public void insert(final String table, final List<? extends Document> documents){

@@ -1,19 +1,23 @@
 package com.fmh.commons.mongo;
 
+import com.fmh.commons.mongo.codec.CodecUtil;
+import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCursor;
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Document;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
+import org.bson.codecs.*;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import static java.util.Arrays.asList;
+import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 public class MongoClientBaseTest {
 	private static MongoClientBase client = new MongoClientBase("127.0.0.1", 27017, "test");
@@ -58,32 +62,47 @@ public class MongoClientBaseTest {
 	}
 
 	public static class UserCodec implements Codec<User> {
+		private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
+				new BsonValueCodecProvider(),
+				new DocumentCodecProvider()));
+		private final BsonTypeCodecMap bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", new BsonTypeClassMap()), DEFAULT_REGISTRY);
 
 		@Override
 		public User decode(BsonReader reader, DecoderContext decoderContext) {
 			User user = new User();
+			reader.readStartDocument();
 			user.setAge(reader.readInt32("_id"));
 			user.setUserName(reader.readString("userName"));
-			reader.readStartArray();
-			while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-				String readFieldName = reader.readName();
-				BsonType type = reader.getCurrentBsonType();
-				if (type == BsonType.NULL) {
-					reader.readNull();
-				} else {
-
-				}
-			}
+			user.setAge(reader.readInt32("age"));
+			user.setUsed_name(CodecUtil.readList(reader, decoderContext, bsonTypeCodecMap));
+			reader.readEndDocument();
 			return user;
 		}
 
 		@Override
 		public void encode(BsonWriter writer, User value, EncoderContext encoderContext) {
-
+			writer.writeStartDocument();
+			writer.writeInt32("_id", value.getId());
+			writer.writeString("userName", value.getUserName());
+			writer.writeInt32("age", value.getAge());
+			writer.writeName("used_name");
+			CodecUtil.writeIterable(writer, value.getUsed_name(), encoderContext, DEFAULT_REGISTRY);
+			writer.writeEndDocument();
 		}
 
 		@Override
 		public Class<User> getEncoderClass() {
+			return User.class;
+		}
+	}
+
+	public static class UserCodecRegistry implements CodecRegistry {
+
+		@Override
+		public <T> Codec<T> get(Class<T> clazz) {
+			if (clazz == User.class) {
+				return (Codec<T>) new UserCodec();
+			}
 			return null;
 		}
 	}
@@ -269,6 +288,17 @@ public class MongoClientBaseTest {
 	@Test
 	public void test27() {
 		System.out.println(client.getPort());
+	}
+
+	@Test
+	public void test28() {
+		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
+		User user = new User();
+		user.setId(1);
+		user.setAge(20);
+		user.setUserName("fanminghui");
+		user.setUsed_name(Arrays.asList("fanminghui1","fanminghui2"));
+		mongo.insert("user",user,User.class);
 	}
 }
 
