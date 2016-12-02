@@ -30,7 +30,6 @@ public class MongoClientBase {
 	private MongoClient mongo;
 	private ServerAddress address;
 	private MongoClientOptions mongoClientOptions;
-	private Class documentClass = Document.class;
 
 
 	protected boolean checkTable(String table) {
@@ -215,7 +214,7 @@ public class MongoClientBase {
 		database.getCollection(table).insertOne(document);
 	}
 
-	public void insert(final String table, final Object document, final Class Clazz){
+	public <T> void insert(final String table, final T document, final Class<T> Clazz){
 		if (!checkTable(table)){
 			Loggers.STDOUT.error("table error!");
 			return;
