@@ -30,9 +30,6 @@ public class MongoClientBase {
 	private ServerAddress address;
 	private MongoClientOptions mongoClientOptions;
 
-	private void init() {
-
-	}
 
 	protected boolean checkTable(String table) {
 		return !StringUtils.isEmpty(table);
