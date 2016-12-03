@@ -11,6 +11,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.FileAppender;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -148,6 +149,14 @@ public class MongoClientBase {
 			return null;
 		}
 		return database.getCollection(table).find(query).first();
+	}
+
+	public <T> T findOne(final String table, final Document query, final Class<T> clazz){
+		if (!checkTable(table)) {
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table,clazz).find(query).first();
 	}
 
 	public Document get(final String table, final Object id) {

@@ -300,5 +300,12 @@ public class MongoClientBaseTest {
 		user.setUsed_name(Arrays.asList("fanminghui1","fanminghui2"));
 		mongo.insert("user",user,User.class);
 	}
+
+	@Test
+	public void test29(){
+		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
+		User user = mongo.findOne("user",new Document("_id",1),User.class);
+		System.out.println(user.getUsed_name());
+	}
 }
 
