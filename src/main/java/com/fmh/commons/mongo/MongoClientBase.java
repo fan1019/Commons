@@ -216,11 +216,7 @@ public class MongoClientBase {
 	}
 
 	public void insert(final String table, final Document document){
-		if (!checkTable(table)){
-			Loggers.STDOUT.error("table error!");
-			return;
-		}
-		database.getCollection(table).insertOne(document);
+		insert(table,document,Document.class);
 	}
 
 	public <T> void insert(final String table, final T document, final Class<T> Clazz){

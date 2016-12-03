@@ -111,7 +111,7 @@ public class MongoClientBaseTest {
 	@Test
 	public void test1() {
 		Document doc = new Document();
-		doc.put("_id", 1);
+		doc.put("_id", 10);
 		doc.put("name", "minghui");
 		client.insert("test", doc);
 	}
