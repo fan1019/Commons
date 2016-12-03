@@ -144,11 +144,7 @@ public class MongoClientBase {
 	}
 
 	public Document findOne(final String table, final Document query) {
-		if (!checkTable(table)) {
-			Loggers.STDOUT.error("table error!");
-			return null;
-		}
-		return database.getCollection(table).find(query).first();
+		return findOne(table,query,Document.class);
 	}
 
 	public <T> T findOne(final String table, final Document query, final Class<T> clazz){
@@ -160,11 +156,15 @@ public class MongoClientBase {
 	}
 
 	public Document get(final String table, final Object id) {
+		return get(table,id,Document.class);
+	}
+
+	public <T> T get(final String table, final Object id, Class<T> clazz) {
 		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
 			return null;
 		}
-		return database.getCollection(table).find(eq("_id", id)).first();
+		return database.getCollection(table,clazz).find(eq("_id", id)).first();
 	}
 
 	public Long count(final String table) {

@@ -176,7 +176,7 @@ public class MongoClientBaseTest {
 
 	@Test
 	public void test10() {
-		System.out.println(client.get("test", 2));
+		System.out.println(client.get("test", 3));
 	}
 
 	@Test
@@ -305,6 +305,13 @@ public class MongoClientBaseTest {
 	public void test29(){
 		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
 		User user = mongo.findOne("user",new Document("_id",1),User.class);
+		System.out.println(user.getUsed_name());
+	}
+
+	@Test
+	public void test30(){
+		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
+		User user = mongo.get("user",1,User.class);
 		System.out.println(user.getUsed_name());
 	}
 }
