@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -181,17 +180,15 @@ public class MongoClientBaseTest {
 
 	@Test
 	public void test11() {
-		Iterator<Object> ids = client.ids("test", new Document("name", "minghui")).iterator();
-		while (ids.hasNext()) {
-			System.out.println(ids.next());
+		for (Object o : client.ids("test", new Document("name", "minghui"))) {
+			System.out.println(o);
 		}
 	}
 
 	@Test
 	public void test12() {
-		Iterator<Object> ids = client.ids("test", new Document("name", "minghui"), new Document("_id", -1), 2, 2).iterator();
-		while (ids.hasNext()) {
-			System.out.println(ids.next());
+		for (Object o : client.ids("test", new Document("name", "minghui"), new Document("_id", -1), 2, 2)) {
+			System.out.println(o);
 		}
 	}
 
@@ -260,18 +257,15 @@ public class MongoClientBaseTest {
 		pipeline.add(match);
 		pipeline.add(group);
 		pipeline.add(sort);
-		Iterator<Document> it = client.aggregate("test", pipeline).iterator();
-		while (it.hasNext()) {
-			Document doc = it.next();
+		for (Document doc : client.aggregate("test", pipeline)) {
 			System.out.println(doc);
 		}
 	}
 
 	@Test
 	public void test24() {
-		Iterator<Document> it = client.listCollections().iterator();
-		while (it.hasNext()) {
-			System.out.println(it.next());
+		for (Document document : client.listCollections()) {
+			System.out.println(document);
 		}
 	}
 
