@@ -314,5 +314,11 @@ public class MongoClientBaseTest {
 		User user = mongo.get("user",1,User.class);
 		System.out.println(user.getUsed_name());
 	}
+
+	@Test
+	public void test31(){
+		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
+		System.out.println(mongo.findOne("user",new Document("_id",1),new Document("userName",1)));
+	}
 }
 

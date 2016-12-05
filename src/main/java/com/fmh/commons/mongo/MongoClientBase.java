@@ -145,6 +145,15 @@ public class MongoClientBase {
 		return findOne(table,query,Document.class);
 	}
 
+	public Document findOne(final String table, final Document query, final Document field) {
+		if (!checkTable(table)) {
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).find(query).projection(field).first();
+	}
+
+
 	public <T> T findOne(final String table, final Document query, final Class<T> clazz){
 		if (!checkTable(table)) {
 			Loggers.STDOUT.error("table error!");
@@ -356,6 +365,5 @@ public class MongoClientBase {
 	public int getPort(){
 		return address.getPort();
 	}
-
 
 }
