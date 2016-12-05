@@ -350,6 +350,14 @@ public class MongoClientBase {
 		return database.getCollection(table).aggregate(pipeline);
 	}
 
+	public <T> Iterable<T> distinct(final String table, final String fieldName, Class<T> resultClass){
+		if (!checkTable(table)){
+			Loggers.STDOUT.error("table error!");
+			return null;
+		}
+		return database.getCollection(table).distinct(fieldName,resultClass);
+	}
+
 	public Iterable<Document> listCollections(){
 		return database.listCollections();
 	}

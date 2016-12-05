@@ -10,6 +10,7 @@ import org.bson.codecs.*;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.Test;
 
+import javax.sound.midi.Soundbank;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -313,6 +314,20 @@ public class MongoClientBaseTest {
 	public void test31(){
 		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
 		System.out.println(mongo.findOne("user",new Document("_id",1),new Document("userName",1)));
+	}
+
+	@Test
+	public void test32(){
+		for (String str : client.distinct("test",	"name",String.class)){
+			System.out.println(str);
+		}
+	}
+
+	@Test
+	public void test33(){
+		for (String str : client.distinct("user",	"used_name",String.class)){
+			System.out.println(str);
+		}
 	}
 }
 
