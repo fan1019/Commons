@@ -232,13 +232,17 @@ public class MongoClientBase {
 	}
 
 	public void insert(final String table, final List<? extends Document> documents, final boolean order){
+		insert(table,documents,order,Document.class);
+	}
+
+	public <T> void insert(final String table, final List<? extends T> documents, final boolean order, final Class<T> clazz){
 		if (!checkTable(table)){
 			Loggers.STDOUT.error("table error!");
 			return;
 		}
 		InsertManyOptions options = new InsertManyOptions();
 		options.ordered(order);
-		database.getCollection(table).insertMany(documents,options);
+		database.getCollection(table,clazz).insertMany(documents,options);
 	}
 
 	public Document updateOne(final String table, final Document query, final Document update){
