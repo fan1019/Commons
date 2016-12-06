@@ -38,12 +38,24 @@ public class DateUtil {
 	}
 
 	public static Date getDate(final int year, final int month, final int day) {
-		return getDate(year, month, day,0,0,0);
+		return getDate(year, month, day, 0, 0, 0);
 	}
 
-	public static Long getTimeMillis(final Date date){
+	public static Long getTimeMillis(final Date date) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
+		return calendar.getTimeInMillis();
+	}
+
+	public static Long getTimeMillis(final int year, final int month, final int day) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.YEAR, year);
+		calendar.set(Calendar.MONTH, month - 1 < 0 ? 0 : month - 1);
+		calendar.set(Calendar.DATE, day);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
 		return calendar.getTimeInMillis();
 	}
 }

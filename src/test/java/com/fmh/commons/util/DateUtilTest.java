@@ -27,4 +27,9 @@ public class DateUtilTest {
 	public void test4(){
 		System.out.println(DateUtil.getTimeMillis(new Date()));
 	}
+
+	@Test
+	public void test5(){
+		System.out.println(DateUtil.getTimeMillis(2016,12,6));
+	}
 }
