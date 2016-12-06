@@ -36,4 +36,14 @@ public class DateUtil {
 		calendar.set(Calendar.SECOND, second);
 		return calendar.getTime();
 	}
+
+	public static Date getDate(final int year, final int month, final int day) {
+		return getDate(year, month, day,0,0,0);
+	}
+
+	public static Long getTimeMillis(final Date date){
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		return calendar.getTimeInMillis();
+	}
 }
