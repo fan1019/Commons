@@ -17,4 +17,9 @@ public class DateUtilTest {
 	public void test2() throws ParseException {
 		System.out.println(DateUtil.format("2016-06-01","yyyy-MM"));
 	}
+
+	@Test
+	public void test3(){
+		System.out.println(DateUtil.getDate(2016,6,15,12,12,6));
+	}
 }
