@@ -287,7 +287,8 @@ public class MongoClientBaseTest {
 
 	@Test
 	public void test28() {
-		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),new UserCodecRegistry());
+		MongoClientBase mongo = new MongoClientBase("127.0.0.1", 27017, "test", MongoClient.getDefaultCodecRegistry(),
+				new UserCodecRegistry());
 		User user = new User();
 		user.setId(1);
 		user.setAge(20);
