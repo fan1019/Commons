@@ -5,7 +5,6 @@ import org.junit.Test;
 import javax.mail.MessagingException;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
